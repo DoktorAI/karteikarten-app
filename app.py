@@ -24,7 +24,8 @@ if "karten" in st.session_state and st.session_state.karten:
 
     # Format für Anzeige
     formatted_cards = [f"{i+1}. {k}" for i, k in enumerate(st.session_state.karten)]
-    sortiertes = sort_items(formatted_cards, direction="horizontal", grid=True)
+    sortiertes = sort_items(formatted_cards)
+
 
     if sortiertes != formatted_cards:
         st.session_state.karten = [s.split(". ", 1)[1] for s in sortiertes]
