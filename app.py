@@ -1,48 +1,44 @@
 import streamlit as st
 from streamlit_sortables import sort_items
+import math
 
 st.set_page_config(page_title="Karteikarten Generator", layout="wide")
-
 st.title("📇 Karteikarten aus Stichpunkten")
 
-# Session-State für Karteikarten initialisieren
-if "karten" not in st.session_state:
-    st.session_state.karten = []
+# Eingabefeld für komplette Stichpunktliste
+st.subheader("✍️ Stichpunkte eingeben (ein Stichpunkt pro Zeile)")
+text_input = st.text_area("Jeder Stichpunkt wird zu einer Karteikarte:", height=300)
 
-# Neue Karte hinzufügen
-with st.form("neue_karte"):
-    neuer_text = st.text_area("Stichpunkt eingeben", height=100)
-    col1, col2 = st.columns([3, 1])
-    with col2:
-        absenden = st.form_submit_button("➕ Hinzufügen")
+# Karteikarten erzeugen
+if st.button("🎴 Karteikarten generieren"):
+    st.session_state.karten = [line.strip() for line in text_input.split("\n") if line.strip()]
 
-    if absenden and neuer_text.strip():
-        st.session_state.karten.append(neuer_text.strip())
+# Karten anzeigen und sortieren
+if "karten" in st.session_state and st.session_state.karten:
+    st.markdown("---")
+    st.subheader("📇 Deine Karteikarten (per Drag & Drop sortierbar)")
 
-st.markdown("---")
-st.subheader("🧩 Karteikarten Übersicht (zum Sortieren klicken & ziehen)")
+    # Karten in Grid umwandeln
+    def chunk_list(lst, n):
+        return [lst[i:i + n] for i in range(0, len(lst), n)]
 
-# Drag & Drop mit streamlit-sortables
-karten_liste = [f"{i+1}. {k}" for i, k in enumerate(st.session_state.karten)]
-sortiertes = sort_items(karten_liste, direction="vertical")
+    # Format für Anzeige
+    formatted_cards = [f"{i+1}. {k}" for i, k in enumerate(st.session_state.karten)]
+    sortiertes = sort_items(formatted_cards, direction="horizontal", grid=True)
 
-if sortiertes != karten_liste:
-    st.session_state.karten = [k.split(". ", 1)[1] for k in sortiertes]
+    if sortiertes != formatted_cards:
+        st.session_state.karten = [s.split(". ", 1)[1] for s in sortiertes]
 
-# Zwischenkarten-Einfügefeld
-st.markdown("---")
-st.subheader("📌 Neue Karte zwischen zwei bestehende einfügen")
-
-if len(st.session_state.karten) >= 2:
-    zwischen_index = st.selectbox("Nach welcher Karte soll eingefügt werden?", 
-                                   [f"{i+1}. {text}" for i, text in enumerate(st.session_state.karten)])
-    zwischen_text = st.text_area("Neuen Stichpunkt eingeben", key="zwischen_text")
-    if st.button("Zwischenfügen") and zwischen_text.strip():
-        idx = int(zwischen_index.split(".")[0])
-        st.session_state.karten.insert(idx, zwischen_text.strip())
-
-# Alle Karten anzeigen
-st.markdown("---")
-st.subheader("📋 Aktuelle Karteikarten")
-for i, karte in enumerate(st.session_state.karten):
-    st.markdown(f"**{i+1}.** {karte}")
+    # Visuelle Anzeige der Karten im Grid-Stil
+    cols = st.columns(5)
+    for i, card in enumerate(st.session_state.karten):
+        with cols[i % 5]:
+            st.markdown(
+                f"""
+                <div style='border:1px solid #ccc; border-radius:8px; padding:12px; margin:8px 0; 
+                     background-color:#f9f9f9; text-align:center; min-height:80px;'>
+                    {card}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
